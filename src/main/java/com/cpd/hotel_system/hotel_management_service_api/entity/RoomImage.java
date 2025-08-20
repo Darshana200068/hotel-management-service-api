@@ -13,4 +13,8 @@ public class RoomImage {
 
     @Embedded
     private FileFormatter fileFormatter;
+
+    @ManyToOne()
+    @JoinColumn(name = "room_id")
+    private Room room;
 }
