@@ -21,7 +21,7 @@ public class ResponseHotelDto {
     private LocalDateTime createdAt;
     private String description;
     private int starRating;
-    private BigDecimal startingAt;
+    private BigDecimal startingFrom;
     private LocalDateTime updatedAt;
 
     private List<ResponseBranchDto> branches;
