@@ -6,15 +6,18 @@ import com.cpd.hotel_system.hotel_management_service_api.dto.response.ResponseHo
 import com.cpd.hotel_system.hotel_management_service_api.dto.response.paginate.HotelPaginateResponseDto;
 import com.cpd.hotel_system.hotel_management_service_api.entity.Branch;
 import com.cpd.hotel_system.hotel_management_service_api.entity.Hotel;
+import com.cpd.hotel_system.hotel_management_service_api.exceptions.EntryNotFoundException;
 import com.cpd.hotel_system.hotel_management_service_api.repo.HotelRepo;
 import com.cpd.hotel_system.hotel_management_service_api.service.HotelService;
 import com.cpd.hotel_system.hotel_management_service_api.util.ByteCodeHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,23 +37,46 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    public void update(RequestHotelDto dto, String hotelId) {
+    public void update(RequestHotelDto dto, String hotelId) throws SQLException {
+        Hotel seletedHotel=hotelRepo.findById(hotelId).orElseThrow(()->new EntryNotFoundException("Hotel Not Found1!"));
+        seletedHotel.setHotelName(dto.getHotelName());
+        seletedHotel.setUpdatedAt(LocalDateTime.now());
+        seletedHotel.setDescription(byteCodeHandler.stringToBlob(dto.getDescription()));
+        seletedHotel.setStartingFrom(dto.getStartingFrom());
+        seletedHotel.setStarRating(dto.getStarRating());
+        hotelRepo.save(seletedHotel);
 
     }
 
     @Override
     public void delete(String hotelId) {
+        Hotel seletedHotel=hotelRepo.findById(hotelId).orElseThrow(()->new EntryNotFoundException("Hotel Not Found1!"));
+        hotelRepo.deleteById(hotelId);
 
     }
 
     @Override
-    public ResponseHotelDto findById(String hotelId) {
-        return null;
+    public ResponseHotelDto findById(String hotelId) throws SQLException {
+        Hotel seletedHotel=hotelRepo.findById(hotelId).orElseThrow(()->new EntryNotFoundException("Hotel Not Found!"));
+        return toResponseHotelDto(seletedHotel);
+
     }
 
     @Override
     public HotelPaginateResponseDto findAll(int page, int size, String searchText) {
-        return null;
+
+      return HotelPaginateResponseDto.builder()
+               .dataCount(hotelRepo.countAllHotels(searchText))
+               .dataList(
+                       hotelRepo.searchAllHotels(searchText, PageRequest.of(page, size))
+                               .stream().map( e-> {
+                                   try {
+                                       return toResponseHotelDto(e);
+                                   } catch (SQLException ex) {
+                                       throw new RuntimeException(ex);
+                                   }
+                               }).collect(Collectors.toList())
+               ).build();
     }
 
     //map-structs , model-mappers
@@ -70,6 +96,7 @@ public class HotelServiceImpl implements HotelService {
                         .startingFrom(dto.getStartingFrom())
                         .build();
     }
+    //Entity ==> DTO
     private ResponseHotelDto toResponseHotelDto(Hotel hotel) throws SQLException {
         return hotel==null?null:
                 ResponseHotelDto.builder()
