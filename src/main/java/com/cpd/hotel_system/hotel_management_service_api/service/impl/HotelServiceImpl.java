@@ -27,7 +27,7 @@ public class HotelServiceImpl implements HotelService {
     private final ByteCodeHandler byteCodeHandler;
 
     @Override
-    public void crate(RequestHotelDto dto) {
+    public void create(RequestHotelDto dto) {
         try {
             hotelRepo.save(toHotel(dto));
         } catch (SQLException e) {
